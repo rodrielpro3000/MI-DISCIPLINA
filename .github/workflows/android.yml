@@ -1,0 +1,86 @@
+name: Crear APK MI DISCIPLINA
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/workflows/android.yml']
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Preparar Android
+        shell: python
+        run: |
+          from pathlib import Path
+          import shutil
+          root = Path('android')
+          def put(name, text):
+              p = root / name
+              p.parent.mkdir(parents=True, exist_ok=True)
+              p.write_text(text, encoding='utf-8')
+          put('settings.gradle', "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }; dependencyResolutionManagement { repositories { google(); mavenCentral() } }; rootProject.name='MiDisciplina'; include ':app'")
+          put('build.gradle', "plugins { id 'com.android.application' version '8.9.2' apply false }")
+          put('gradle.properties', 'android.useAndroidX=true\norg.gradle.jvmargs=-Xmx2g')
+          put('app/build.gradle', "plugins { id 'com.android.application' }; android { namespace 'cl.midisciplina.app'; compileSdk 35; defaultConfig { applicationId 'cl.midisciplina.app'; minSdk 26; targetSdk 35; versionCode 1; versionName '1.0' } }; dependencies { implementation 'androidx.webkit:webkit:1.12.1' }")
+          put('app/src/main/AndroidManifest.xml', '''<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="MI DISCIPLINA" android:icon="@drawable/icon" android:allowBackup="false" android:theme="@android:style/Theme.Material.NoActionBar" android:supportsRtl="true"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>''')
+          put('app/src/main/java/cl/midisciplina/app/MainActivity.java', '''package cl.midisciplina.app;
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.graphics.Color;
+          import android.webkit.*;
+          import android.view.View;
+          import androidx.webkit.WebViewAssetLoader;
+          public class MainActivity extends Activity {
+            private WebView web;
+            @Override public void onCreate(Bundle state) {
+              super.onCreate(state);
+              getWindow().setStatusBarColor(Color.rgb(8,13,24));
+              getWindow().setNavigationBarColor(Color.rgb(8,13,24));
+              web=new WebView(this);
+              web.setBackgroundColor(Color.rgb(8,13,24));
+              web.setFitsSystemWindows(true);
+              web.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets.consumeSystemWindowInsets();});
+              setContentView(web);
+              web.requestApplyInsets();
+              web.getSettings().setJavaScriptEnabled(true);
+              web.getSettings().setDomStorageEnabled(true);
+              web.getSettings().setAllowFileAccess(false);
+              web.getSettings().setAllowContentAccess(false);
+              WebViewAssetLoader loader=new WebViewAssetLoader.Builder().addPathHandler("/assets/",new WebViewAssetLoader.AssetsPathHandler(this)).build();
+              web.setWebViewClient(new WebViewClient(){
+                @Override public WebResourceResponse shouldInterceptRequest(WebView v,WebResourceRequest r){return loader.shouldInterceptRequest(r.getUrl());}
+                @Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){return !r.getUrl().toString().startsWith("https://appassets.androidplatform.net/assets/");}
+              });
+              web.setWebChromeClient(new WebChromeClient());
+              web.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+            }
+          }
+          ''')
+          assets=root/'app/src/main/assets'
+          assets.mkdir(parents=True,exist_ok=True)
+          for name in ['index.html','icon-d-192.png','icon-d-512.png','manifest.webmanifest']:
+              shutil.copy(name,assets/name)
+          html=(assets/'index.html').read_text()
+          html=html.replace('if("serviceWorker" in navigator)', 'if(false)')
+          (assets/'index.html').write_text(html)
+          icon=root/'app/src/main/res/drawable/icon.png'
+          icon.parent.mkdir(parents=True,exist_ok=True)
+          shutil.copy('icon-d-512.png',icon)
+      - name: Compilar y verificar APK
+        run: |
+          gradle -p android assembleDebug --no-daemon
+          cp android/app/build/outputs/apk/debug/app-debug.apk MI-DISCIPLINA.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose MI-DISCIPLINA.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MI-DISCIPLINA-APK
+          path: MI-DISCIPLINA.apk
