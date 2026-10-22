@@ -1,5 +1,5 @@
-const CACHE = 'mi-disciplina-pwa-v5';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon.svg'];
+const CACHE = 'mi-disciplina-pwa-v6';
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-d-192.png', './icon-d-512.png', './icon.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
