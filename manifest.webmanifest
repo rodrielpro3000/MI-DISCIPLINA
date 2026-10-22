@@ -1,6 +1,6 @@
 {
-  "name": "Mi Disciplina - Reto de 30 días",
-  "short_name": "Mi Disciplina",
+  "name": "MI DISCIPLINA",
+  "short_name": "MI DISCIPLINA",
   "description": "Construye hábitos de estudio, descanso, aprendizaje y entrenamiento durante 30 días.",
   "start_url": "./",
   "scope": "./",
