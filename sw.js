@@ -1,4 +1,4 @@
-const CACHE='mi-disciplina-pwa-v7-premium';
+const CACHE='mi-disciplina-pwa-v8-routines';
 const ASSETS=['./','./index.html','./premium.css','./app.js','./manifest.webmanifest','./icon-d-192.png','./icon-d-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('mi-disciplina-pwa-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
