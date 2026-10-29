@@ -1,15 +1,5 @@
-const CACHE = 'mi-disciplina-pwa-v6';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-d-192.png', './icon-d-512.png', './icon.svg'];
-self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
-});
-self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('mi-disciplina-pwa-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
-});
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.registration.scope)) return;
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).catch(error => {
-    if (event.request.mode === 'navigate') return caches.match('./index.html');
-    throw error;
-  })));
-});
+const CACHE='mi-disciplina-pwa-v7-premium';
+const ASSETS=['./','./index.html','./premium.css','./app.js','./manifest.webmanifest','./icon-d-192.png','./icon-d-512.png'];
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('mi-disciplina-pwa-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',event=>{if(event.request.method!=='GET'||!event.request.url.startsWith(self.registration.scope))return;event.respondWith(fetch(event.request).then(response=>{if(response.ok&&response.type==='basic'){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)));}return response;}).catch(()=>caches.match(event.request).then(cached=>cached||(event.request.mode==='navigate'?caches.match('./index.html'):Response.error()))));});
